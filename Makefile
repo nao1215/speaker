@@ -24,6 +24,12 @@ test: ## Start test
 	env GOOS=$(GOOS) $(GO_TEST) -cover $(GO_PKGROOT) -coverprofile=cover.out
 	$(GO_TOOL) cover -html=cover.out -o cover.html
 
+install: ## Install speaker command
+	./scripts/install.sh
+
+add-timesig: ## Add time signal for work in japanese
+	./scripts/timeSignalForWork.sh
+
 vet: ## Start go vet
 	$(GO_VET) $(GO_PACKAGES)
 

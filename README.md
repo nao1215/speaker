@@ -1,7 +1,7 @@
 # speaker - Read the text aloud
 speaker command reads aloud the text message. It supports multilingual voice reading. If you want the time signal, the speaker can also start reading aloud at a specified time.  
 
-**The time signal function is being tested.**
+**The time signal function only work Mac. Linux environment being tested.**
 
 # Platform
 speaker command depends the cron command to implement the time signal function. So, Speaker command only work UNIX(include Mac) / Linux platform.
@@ -17,10 +17,10 @@ $ sudo apt install libasound2-dev
 ```
 
 # How to Install
-## Step.1 Install golang
+### Step.1 Install golang
 If you don't install golang in your system, please install Golang first. Check [the Go official website](https://go.dev/doc/install) for how to install golang.
 
-## Step2. Install speaker
+### Step2 Using go install
 ```
 $ go install github.com/nao1215/speaker/cmd/speaker@latest
 $ sudo cp $GOPATH/bin/speaker /usr/local/bin/.
@@ -28,7 +28,14 @@ $ sudo cp $GOPATH/bin/speaker /usr/local/bin/.
 ※ Binaries must be present in $ PATH in order to use the speaker command with sudo.
    $GOPATH for root and the general user may be different.
 ```
+### Other method: Using git clone and make
 
+```
+$ git clone https://github.com/nao1215/speaker.git
+$ cd speaker
+$ make build
+$ sudo make install
+```
 # How to use
 ## Read the text
 speaker command reads the text in Japanese by default (Because the author is Japanese). 
