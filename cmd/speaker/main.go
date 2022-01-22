@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -57,7 +58,7 @@ var errTimeFormat = errors.New("time format is not correct")
 var errCmdNotFound = errors.New(cmdName + " is not found $PATH and $GOPATH")
 
 const cmdName string = "speaker"
-const version string = "0.1.1"
+const version string = "0.1.2"
 
 // Time has hour and minute
 type Time struct {
@@ -102,7 +103,7 @@ func register(text string, opts options) {
 		die(err.Error())
 	}
 
-	if err := registerCron(text, time); err != nil {
+	if err := registerCron(text, time, opts.Lang); err != nil {
 		showHelpForSudo(text, opts.Register)
 		fmt.Fprintln(os.Stderr, "")
 		die("can not register time signal: " + err.Error())
@@ -131,6 +132,37 @@ func delete() {
 	if err := updateCronFile(target); err != nil {
 		die("fail to update cron file: " + err.Error())
 	}
+}
+
+func isSupportedLang(target string) bool {
+	langs := []string{
+		"en", "en-UK", "en-AU", "ja", "de", "es", "ru", "ar",
+		"bn", "cs", "da", "nl", "fi", "el", "hi", "hu", "id",
+		"km", "la", "it", "no", "pl", "sk", "sv", "th", "tr", "uk",
+		"vi", "af", "bg", "ca", "cy", "et", "fr", "gu", "is", "jv",
+		"kn", "ko", "lv", "ml", "mr", "ms", "ne", "pt", "ro", "si", "sr",
+		"su", "ta", "te", "tl", "ur", "zh", "sw", "sq", "my", "mk",
+		"hy", "hr", "eo", "bs",
+	}
+	return contains(langs, target)
+}
+
+func contains(list interface{}, elem interface{}) bool {
+	rvList := reflect.ValueOf(list)
+
+	if rvList.Kind() == reflect.Slice {
+		for i := 0; i < rvList.Len(); i++ {
+			item := rvList.Index(i).Interface()
+			if !reflect.TypeOf(elem).ConvertibleTo(reflect.TypeOf(item)) {
+				continue
+			}
+			target := reflect.ValueOf(elem).Convert(reflect.TypeOf(item)).Interface()
+			if ok := reflect.DeepEqual(item, target); ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func decideDeleteTargets(targets []string) (string, error) {
@@ -265,8 +297,8 @@ func showHelpForSudo(text, time string) {
 	fmt.Fprintln(os.Stderr, "$ sudo -E "+cmdName+" -r "+time+" \""+text+"\"")
 }
 
-func registerCron(text string, time Time) error {
-	file, err := os.OpenFile(getCronFilePath(), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+func registerCron(text string, time Time, lang string) error {
+	file, err := os.OpenFile(getCronFilePath(), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}
@@ -277,9 +309,58 @@ func registerCron(text string, time Time) error {
 		return err
 	}
 
-	schedule := time.min + " " + time.hour + " * * * " + cmdPath + " \"" + text + "\""
+	schedule := time.min + " " + time.hour + " * * * " + cmdPath + " --lang=" + lang + " \"" + text + "\""
 	fmt.Fprintln(file, schedule)
+
+	if err := changeCronFileOwnership(); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func changeCronFileOwnership() error {
+	uid, err := lookupUID(os.Getenv("SUDO_USER"))
+	if err != nil {
+		return err
+	}
+	gid, err := lookupGID("crontab")
+
+	if err := os.Chown(getCronFilePath(), uid, gid); err != nil {
+		return err
+	}
+	return nil
+}
+
+func lookupGID(groupID string) (int, error) {
+	group, err := user.LookupGroupId(groupID)
+	if err != nil {
+		group, err = user.LookupGroup(groupID)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	gid, err := strconv.Atoi(group.Gid)
+	if err != nil {
+		return 0, err
+	}
+	return gid, nil
+}
+
+func lookupUID(userID string) (int, error) {
+	u, err := user.LookupId(userID)
+	if err != nil {
+		u, err = user.Lookup(userID)
+		if err != nil {
+			return 0, err
+		}
+	}
+	uid, err := strconv.Atoi(u.Uid)
+	if err != nil {
+		return 0, err
+	}
+	return uid, nil
 }
 
 func speakerCmdPath() (string, error) {
@@ -429,6 +510,10 @@ func parseArgs(opts *options) []string {
 		die("can't be used --register option and --delete option at same time")
 	}
 
+	if !isSupportedLang(opts.Lang) {
+		die(opts.Lang + " is not supported language")
+	}
+
 	if len(args) < 1 && !opts.Delete {
 		showHelp(p)
 		showHelpFooter()
@@ -462,7 +547,7 @@ func showHelp(p *flags.Parser) {
 func showHelpFooter() {
 	fmt.Println("")
 	fmt.Println("Supported language:")
-	fmt.Println("  Please you see: https://github.com/nao1215/ubume/tree/main/doc/SupportedLanguage.md")
+	fmt.Println("  Please you see: https://github.com/nao1215/speaker/blob/main/doc/SupportedLanguage.md")
 	fmt.Println("")
 	fmt.Println("Contact:")
 	fmt.Println("  If you find the bugs, please report the content of the error.")
