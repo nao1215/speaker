@@ -5,7 +5,7 @@ speaker command reads aloud the text message. It supports multilingual voice rea
 **The time signal function only work Mac. Linux environment being tested.**
 
 # Platform
-speaker command depends the cron command to implement the time signal function. So, Speaker command only work UNIX(include Mac) / Linux platform.
+speaker command depends the cron command to implement the time signal function. So, Speaker command only work UNIX(include Mac) / Linux platform. Does not support Windows.
 
 # Prerequisite
 ## macOS
