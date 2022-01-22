@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -56,7 +57,7 @@ var errTimeFormat = errors.New("time format is not correct")
 var errCmdNotFound = errors.New(cmdName + " is not found $PATH and $GOPATH")
 
 const cmdName string = "speaker"
-const version string = "0.1.0"
+const version string = "0.1.1"
 
 // Time has hour and minute
 type Time struct {
@@ -160,8 +161,19 @@ func decideDeleteTargets(targets []string) (string, error) {
 	return targets[no-1], nil
 }
 
+func getCronFilePath() string {
+	if runtime.GOOS == "darwin" {
+		return filepath.Join("/var/at/tabs", os.Getenv("SUDO_USER"))
+	} else if runtime.GOOS == "linux" {
+		return filepath.Join("/var/spool/cron/crontabs", os.Getenv("SUDO_USER"))
+	}
+	// BSD: /usr/lib/cron/tabs/USER
+	// GNU: /var/spool/cron/crontab/USER
+	return ""
+}
+
 func getDeleteTargets() ([]string, error) {
-	strList, err := readFileToStrList("/var/spool/cron/crontabs/" + os.Getenv("SUDO_USER"))
+	strList, err := readFileToStrList(getCronFilePath())
 	if err != nil {
 		return []string{}, err
 	}
@@ -212,8 +224,7 @@ func listToFile(filepath string, lines []string) error {
 }
 
 func updateCronFile(target string) error {
-	cronFile := "/var/spool/cron/crontabs/" + os.Getenv("SUDO_USER")
-	strList, err := readFileToStrList(cronFile)
+	strList, err := readFileToStrList(getCronFilePath())
 	if err != nil {
 		return err
 	}
@@ -224,7 +235,7 @@ func updateCronFile(target string) error {
 			newList = append(newList, v)
 		}
 	}
-	return listToFile(cronFile, newList)
+	return listToFile(getCronFilePath(), newList)
 }
 
 func convMp3(text string, opts options) {
@@ -251,12 +262,11 @@ func speak(text string, opts options) {
 func showHelpForSudo(text, time string) {
 	fmt.Fprintln(os.Stderr, "If you download "+cmdName+" command by go install, please execute as follows.")
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "$ sudo -E "+cmdName+" -r "+time+" "+text)
+	fmt.Fprintln(os.Stderr, "$ sudo -E "+cmdName+" -r "+time+" \""+text+"\"")
 }
 
 func registerCron(text string, time Time) error {
-	file, err := os.OpenFile("/var/spool/cron/crontabs/"+os.Getenv("SUDO_USER"),
-		os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	file, err := os.OpenFile(getCronFilePath(), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
