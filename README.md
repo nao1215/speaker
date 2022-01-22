@@ -1,3 +1,4 @@
+[![Build](https://github.com/nao1215/speaker/actions/workflows/build.yml/badge.svg)](https://github.com/nao1215/speaker/actions/workflows/build.yml)
 # speaker - Read the text aloud
 speaker command reads aloud the text message. It supports multilingual voice reading. If you want the time signal, the speaker can also start reading aloud at a specified time.  
 
