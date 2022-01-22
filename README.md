@@ -27,7 +27,7 @@ $ go install github.com/nao1215/speaker/cmd/speaker@latest
 
 # How to use
 ## Read the text
-Speaker command reads the text in Japanese by default (Because the author is Japanese). 
+speaker command reads the text in Japanese by default (Because the author is Japanese). 
 ```
 $ speaker "こんにちは"
 ```
