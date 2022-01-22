@@ -15,3 +15,5 @@
 # vendor/
 
 ./speaker
+./cover.out
+./cover.html
