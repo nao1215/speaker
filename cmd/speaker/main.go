@@ -56,7 +56,7 @@ var errTimeFormat = errors.New("time format is not correct")
 var errCmdNotFound = errors.New(cmdName + " is not found $PATH and $GOPATH")
 
 const cmdName string = "speaker"
-const version string = "1.0.0"
+const version string = "0.1.0"
 
 // Time has hour and minute
 type Time struct {
