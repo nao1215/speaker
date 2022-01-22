@@ -23,6 +23,10 @@ If you don't install golang in your system, please install Golang first. Check [
 ## Step2. Install speaker
 ```
 $ go install github.com/nao1215/speaker/cmd/speaker@latest
+$ sudo cp $GOPATH/bin/speaker /usr/local/bin/.
+
+※ Binaries must be present in $ PATH in order to use the speaker command with sudo.
+   $GOPATH for root and the general user may be different.
 ```
 
 # How to use
