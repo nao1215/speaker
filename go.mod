@@ -1,6 +1,6 @@
 module github.com/nao1215/speaker
 
-go 1.17
+go 1.18
 
 require (
 	github.com/faiface/beep v1.1.0
