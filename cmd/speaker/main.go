@@ -498,7 +498,7 @@ func parseArgs(opts *options) []string {
 		if err != nil {
 			die("can not get data from pipe: " + err.Error())
 		}
-		return []string{stdin}
+		return []string{strings.ReplaceAll(stdin, "\n", "")}
 	}
 
 	if opts.Version {
